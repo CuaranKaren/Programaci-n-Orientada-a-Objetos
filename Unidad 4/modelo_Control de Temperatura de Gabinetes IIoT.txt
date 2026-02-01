@@ -1,0 +1,30 @@
+import Adafruit_DHT
+
+class FalloHardwareError(Exception):
+    def __init__(self, pin_id, mensaje="El sensor no responde (Ningun dato)"):
+        self.pin_id = pin_id
+        self.mensaje = mensaje
+        super().__init__(self.mensaje)
+
+class SobrecalentamientoError(Exception):
+    def __init__(self, pin_id, temperatura, mensaje="Temperatura Crtica!"):
+        self.pin_id = pin_id
+        self.temperatura = temperatura
+        self.mensaje = mensaje
+        super().__init__(f"{mensaje} T={temperatura}C en PIN {pin_id}")
+
+class SistemaTermico:
+    def __init__(self, pin_sensor):
+        self.pin_sensor = pin_sensor
+        self.sensor_tipo = Adafruit_DHT.DHT11
+
+    def obtener_datos(self):
+        humedad, temperatura = Adafruit_DHT.read(self.sensor_tipo, self.pin_sensor)
+
+        if temperatura is None:
+            raise FalloHardwareError(self.pin_sensor)
+
+        if temperatura > 23:
+            raise SobrecalentamientoError(self.pin_sensor, round(temperatura, 2))
+
+        return round(temperatura, 2)

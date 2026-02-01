@@ -1,0 +1,17 @@
+from modelo import SistemaTermico
+from vista import InterfazGabinete
+from controlador import ControladorTermico
+
+
+PIN_SENSOR = 4   
+PIN_AZUL = 17    
+PIN_ROJO = 27    
+
+if __name__ == "__main__":
+    modelo = SistemaTermico(pin_sensor=PIN_SENSOR)
+
+    vista = InterfazGabinete(pin_led_azul=PIN_AZUL, pin_led_rojo=PIN_ROJO)
+
+    app = ControladorTermico(modelo, vista)
+
+    app.iniciar_monitoreo()

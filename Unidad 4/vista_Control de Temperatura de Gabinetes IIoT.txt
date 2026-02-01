@@ -1,0 +1,38 @@
+import time
+import RPi.GPIO as GPIO
+
+class InterfazGabinete:
+    def __init__(self, pin_led_azul, pin_led_rojo):
+        self.pin_azul = pin_led_azul
+        self.pin_rojo = pin_led_rojo
+        
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.pin_azul, GPIO.OUT)
+        GPIO.setup(self.pin_rojo, GPIO.OUT)
+
+    def mostrar_normal(self, temperatura):
+        GPIO.output(self.pin_azul, GPIO.HIGH)
+        GPIO.output(self.pin_rojo, GPIO.LOW)
+        print(f"[OK] Sistema estable. Temperatura: {temperatura} C")
+
+    def mostrar_alerta_roja(self, error):
+        GPIO.output(self.pin_azul, GPIO.LOW)
+        
+        print(f"[ALARMA] {error}")
+        
+        for _ in range(5): 
+            GPIO.output(self.pin_rojo, GPIO.HIGH)
+            time.sleep(0.1)
+            GPIO.output(self.pin_rojo, GPIO.LOW)
+            time.sleep(0.1)
+
+    def mostrar_error_hardware(self, error):
+        GPIO.output(self.pin_azul, GPIO.LOW)
+        GPIO.output(self.pin_rojo, GPIO.HIGH)
+        print(f"[ERROR HW] {error}")
+        time.sleep(1) 
+
+    def cerrar_sistema(self):
+        print("Apagando sistema y limpiando GPIO...")
+        GPIO.cleanup()

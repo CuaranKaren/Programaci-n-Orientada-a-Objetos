@@ -1,0 +1,31 @@
+import time
+from modelo import FalloHardwareError, SobrecalentamientoError
+
+class ControladorTermico:
+    def __init__(self, modelo, vista):
+        self.modelo = modelo
+        self.vista = vista
+        self.ejecutando = True
+
+    def iniciar_monitoreo(self):
+        print("Iniciando Monitor IIoT de Gabinete")
+        
+        while self.ejecutando:
+            try:
+                temp = self.modelo.obtener_datos()
+                
+                self.vista.mostrar_normal(temp)
+
+            except SobrecalentamientoError as e:
+                self.vista.mostrar_alerta_roja(e)
+
+            except FalloHardwareError as e:
+                self.vista.mostrar_error_hardware(e)
+
+            except KeyboardInterrupt:
+                self.ejecutando = False
+
+            finally:
+                time.sleep(1)
+        
+        self.vista.cerrar_sistema()
