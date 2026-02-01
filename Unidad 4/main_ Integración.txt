@@ -1,0 +1,8 @@
+from controlador import SystemController
+
+if __name__ == "__main__":
+    try:
+        app = SystemController()
+        app.start()
+    except KeyboardInterrupt:
+        print("Cierre forzado.")

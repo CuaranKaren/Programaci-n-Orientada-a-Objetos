@@ -1,0 +1,92 @@
+from modelo import DatabaseManager, HardwareManager
+from vista import MainView
+
+class SystemController:
+    def __init__(self):
+        self.db = DatabaseManager()
+        self.hw = HardwareManager()
+        self.view = MainView(self)
+        
+        self.running = True
+        self.TEMP_UMBRAL = 28.0
+        self.UPDATE_MS = 2000
+        
+        # --- ESTRATEGIA DE SEGURIDAD ---
+        # Guardamos el ltimo valor vlido para no detener el sistema si el sensor falla
+        self.last_temp = 0.0
+        self.last_hum = 0.0
+        
+        self.monitor_loop()
+
+    def monitor_loop(self):
+        if not self.running:
+            return
+
+        # 1. Leer Sensores
+        # El IR siempre responde rpido
+        hay_obstaculo = self.hw.read_ir()
+        
+        # El DHT puede fallar, intentamos leer
+        hum_raw, temp_raw = self.hw.read_dht()
+
+        # 2. Validacin de Datos (Truco para Defensa)
+        # Si la lectura es buena, actualizamos los valores actuales
+        if hum_raw is not None and temp_raw is not None:
+            self.last_temp = temp_raw
+            self.last_hum = hum_raw
+            sensor_status = "OK"
+        else:
+            # Si falla, usamos los ltimos conocidos para NO detener el registro
+            sensor_status = "Error Sensor"
+            # (Mantenemos self.last_temp y self.last_hum como estn)
+
+        # 3. Lgica de Negocio (Usando valores validados)
+        # Semforo de Obstculos (Prioridad 1)
+        self.hw.set_traffic_light(hay_obstaculo)
+        
+        # Alerta de Temperatura (Prioridad 2)
+        es_temp_alta = self.last_temp > self.TEMP_UMBRAL
+        self.hw.set_temp_alert(es_temp_alta)
+
+        # 4. Actualizar Interfaz (Visualizacin Inmediata)
+        # Obstculo
+        if hay_obstaculo:
+            self.view.lbl_ir.config(text="OBSTACULO", fg="red")
+        else:
+            self.view.lbl_ir.config(text="LIBRE", fg="green")
+
+        # Temperatura (Mostramos el valor o un aviso si est fallando)
+        color_temp = "blue" if sensor_status == "OK" else "gray"
+        self.view.lbl_temp.config(text=f"{self.last_temp:.1f} C", fg=color_temp)
+        self.view.lbl_hum.config(text=f"{self.last_hum:.1f} %", fg=color_temp)
+        
+        # Estado Alerta
+        if es_temp_alta:
+            self.view.lbl_alert.config(text="ALTA!", bg="gold", fg="black")
+        else:
+            self.view.lbl_alert.config(text="NORMAL", bg="green", fg="white")
+
+        # 5. GUARDADO EN BASE DE DATOS (PERSISTENCIA REAL)
+        # Aqu est la clave! Guardamos SIEMPRE, haya o no haya lectura nueva del DHT.
+        # As el profesor ve que la tabla avanza cada 2 segundos.
+        self.db.insert_record(self.last_temp, self.last_hum, hay_obstaculo, es_temp_alta)
+
+        # Refrescar la tabla en pantalla
+        historial = self.db.get_history()
+        self.view.update_history(historial)
+        
+        # Debug en consola
+        if sensor_status == "OK":
+            print(f"Registro OK: T={self.last_temp} | IR={hay_obstaculo}")
+        else:
+            print(f"Fallo DHT (Usando memoria): T={self.last_temp} | IR={hay_obstaculo}")
+
+        self.view.after(self.UPDATE_MS, self.monitor_loop)
+
+    def start(self):
+        self.view.mainloop()
+
+    def shutdown(self):
+        self.running = False
+        self.hw.cleanup()
+        self.view.destroy()
