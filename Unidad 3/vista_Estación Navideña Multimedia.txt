@@ -1,0 +1,98 @@
+import tkinter as tk
+from tkinter import font
+
+class NavidadView(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("🎄 Estación de Monitoreo: Especial Navidad 🎄")
+        self.geometry("600x600") # Aumenté un poco el tamaño para que quepa todo
+        self.configure(bg="#0f2027")
+        self.resizable(False, False)
+
+        self.fuente_datos = font.Font(family="Helvetica", size=14, weight="bold")
+        
+        # --- CANVAS ---
+        self.canvas = tk.Canvas(self, width=600, height=450, bg="#0f2027", highlightthickness=0)
+        self.canvas.pack(pady=10)
+
+        # Fondo (Nieve y Tronco)
+        self.canvas.create_rectangle(0, 400, 600, 450, fill="#FFFFFF", outline="") 
+        self.canvas.create_rectangle(270, 350, 330, 410, fill="#4e342e", outline="")
+
+        # --- DIBUJO DEL ÁRBOL ---
+        # Base
+        self.canvas.create_polygon(150, 350, 450, 350, 300, 200, fill="#1b5e20", outline="#144a19")
+        # Medio
+        self.canvas.create_polygon(175, 250, 425, 250, 300, 120, fill="#2e7d32", outline="#1b5e20")
+        # Punta
+        self.canvas.create_polygon(205, 160, 395, 160, 300, 50, fill="#4caf50", outline="#2e7d32")
+
+        # La Estrella
+        pts_estrella = [300, 20, 310, 45, 340, 45, 315, 65, 325, 95, 
+                        300, 75, 275, 95, 285, 65, 260, 45, 290, 45]
+        self.estrella = self.canvas.create_polygon(pts_estrella, fill="gray", outline="white", width=2)
+
+        # --- DIBUJAR RENO (Estático) ---
+        self.dibujar_reno(x=450, y=380)
+
+        # --- DIBUJAR SANTA (Animado) ---
+        # Lo dibujamos fuera de la pantalla (x=-150) para que entre volando
+        self.dibujar_santa(x=-150, y=100)
+
+        # --- PANEL DE DATOS ---
+        self.frame_datos = tk.Frame(self, bg="#203a43", bd=2, relief="ridge")
+        self.frame_datos.pack(fill="x", padx=20, pady=10)
+
+        self.lbl_temp = tk.Label(self.frame_datos, text="Temp: -- °C", font=self.fuente_datos, fg="#ff6f61", bg="#203a43")
+        self.lbl_temp.pack(side="left", padx=20, pady=10)
+
+        self.lbl_hum = tk.Label(self.frame_datos, text="Humedad: -- %", font=self.fuente_datos, fg="#4db6ac", bg="#203a43")
+        self.lbl_hum.pack(side="right", padx=20, pady=10)
+
+    def dibujar_reno(self, x, y):
+        """Dibuja un reno geométrico simple"""
+        # Cuerpo
+        self.canvas.create_oval(x, y, x+60, y+30, fill="#8d6e63", outline="")
+        # Patas
+        self.canvas.create_line(x+10, y+30, x+10, y+50, width=3, fill="#4e342e")
+        self.canvas.create_line(x+50, y+30, x+50, y+50, width=3, fill="#4e342e")
+        # Cuello y Cabeza
+        self.canvas.create_oval(x-10, y-10, x+20, y+15, fill="#8d6e63", outline="")
+        # Ojo
+        self.canvas.create_oval(x, y, x+5, y+5, fill="black")
+        # Nariz Roja (Rodolfo)
+        self.canvas.create_oval(x-12, y+5, x-2, y+15, fill="red", outline="red")
+        # Cuernos
+        self.canvas.create_line(x+5, y-5, x+5, y-20, width=2, fill="#3e2723")
+        self.canvas.create_line(x+5, y-15, x-5, y-25, width=2, fill="#3e2723")
+
+    def dibujar_santa(self, x, y):
+        """Dibuja el trineo y a Santa. Usa el tag 'santa' para mover todo junto."""
+        # Trineo (Base)
+        self.canvas.create_rectangle(x, y+20, x+80, y+40, fill="#5d4037", tags="santa")
+        self.canvas.create_arc(x-10, y+10, x+30, y+50, start=90, extent=180, style=tk.ARC, width=3, outline="gold", tags="santa")
+        # Santa (Cuerpo y Gorro)
+        self.canvas.create_oval(x+20, y-10, x+60, y+30, fill="red", tags="santa") # Cuerpo
+        self.canvas.create_oval(x+30, y-20, x+50, y, fill="#ffccbc", tags="santa") # Cara
+        self.canvas.create_polygon(x+30, y-20, x+50, y-20, x+40, y-40, fill="red", tags="santa") # Gorro
+        self.canvas.create_oval(x+38, y-42, x+42, y-38, fill="white", tags="santa") # Pompon
+
+    def mover_santa(self, dx, dy):
+        """Mueve todo lo que tenga el tag 'santa'"""
+        self.canvas.move("santa", dx, dy)
+
+    def reset_santa(self):
+        """Borra a Santa y lo vuelve a dibujar al inicio (izquierda)"""
+        self.canvas.delete("santa")
+        self.dibujar_santa(-150, 100)
+
+    def actualizar_clima(self, temp, hum):
+        txt_t = f"Temp: {temp:.1f} °C" if temp is not None else "Temp: Error"
+        txt_h = f"Humedad: {hum:.1f} %" if hum is not None else "Humedad: --"
+        self.lbl_temp.config(text=txt_t)
+        self.lbl_hum.config(text=txt_h)
+
+    def animar_estrella(self, encendida):
+        color = "yellow" if encendida else "gray"
+        efecto = "orange" if encendida else "white"
+        self.canvas.itemconfig(self.estrella, fill=color, outline=efecto)

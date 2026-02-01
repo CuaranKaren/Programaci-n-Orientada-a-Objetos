@@ -1,0 +1,61 @@
+import RPi.GPIO as GPIO
+import adafruit_dht
+import board
+import pygame
+import time
+
+class NavidadModel:
+    def __init__(self):
+        # Configuracin de Pines
+        self.PIN_LED = 18
+        self.PIN_BOTON = 23
+        self.SENSOR_PIN = board.D4
+
+        # Inicializacin de GPIO
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.PIN_LED, GPIO.OUT)
+        GPIO.setup(self.PIN_BOTON, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        
+        # Inicializacin de Sensor y Audio
+        self.sensor = adafruit_dht.DHT11(self.SENSOR_PIN)
+        pygame.mixer.init()
+        
+        self.reproduciendo = False
+
+    def leer_clima(self):
+        """Intenta leer el sensor DHT11. Retorna tupla (temp, hum) o (None, None) si falla."""
+        try:
+            # El DHT11 a veces falla en la lectura, es normal
+            temp = self.sensor.temperature
+            hum = self.sensor.humidity
+            return temp, hum
+        except RuntimeError:
+            return None, None
+
+    def leer_boton(self):
+        """Retorna True si el botn est presionado (Lgica negativa por Pull-Up)"""
+        return GPIO.input(self.PIN_BOTON) == GPIO.LOW
+
+    def controlar_led(self, estado):
+        """Enciende (True) o apaga (False) el LED"""
+        GPIO.output(self.PIN_LED, GPIO.HIGH if estado else GPIO.LOW)
+
+    def reproducir_musica(self):
+        """Inicia la msica si no est sonando"""
+        if not pygame.mixer.music.get_busy():
+            try:
+                pygame.mixer.music.load("jingle_bells.mp3")
+                pygame.mixer.music.play()
+                self.reproduciendo = True
+            except pygame.error:
+                print("Error: No se encontr jingle_bells.mp3")
+
+    def detener_musica(self):
+        """Detiene la msica"""
+        pygame.mixer.music.stop()
+        self.reproduciendo = False
+
+    def limpiar(self):
+        """Limpieza de recursos al cerrar"""
+        GPIO.cleanup()
+        self.sensor.exit()

@@ -1,0 +1,63 @@
+import threading
+import time
+
+class NavidadController:
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
+        self.running = True
+
+        self.hilo = threading.Thread(target=self.bucle_hardware, daemon=True)
+        self.hilo.start()
+        self.view.protocol("WM_DELETE_WINDOW", self.cerrar_aplicacion)
+
+    def bucle_hardware(self):
+        contador_sensor = 0
+        while self.running:
+            if self.model.leer_boton():
+                self.manejar_evento_navidad()
+            
+            # Leer sensor cada 2 segundos aprox
+            if contador_sensor >= 20: 
+                t, h = self.model.leer_clima()
+                self.view.after(0, self.view.actualizar_clima, t, h)
+                contador_sensor = 0
+            
+            contador_sensor += 1
+            time.sleep(0.1)
+
+    def manejar_evento_navidad(self):
+        print("Navidad Activada! Santa despegando...")
+        
+        # 1. Iniciar Hardware y Audio
+        self.model.reproducir_musica()
+        self.model.controlar_led(True)
+        self.view.after(0, self.view.animar_estrella, True)
+
+        # 2. BUCLE DE ANIMACIN (Dura 10 segundos)
+        # Dividimos 10 segundos en pequeos pasos para mover a Santa
+        tiempo_inicio = time.time()
+        duracion = 10 
+        
+        while (time.time() - tiempo_inicio) < duracion:
+            if not self.running: break # Por si cierran la ventana
+            
+            # Movemos a Santa 4 pixeles a la derecha
+            # Usamos view.after para que sea seguro con hilos
+            self.view.after(0, self.view.mover_santa, 4, 0)
+            
+            # Pequea pausa para controlar la velocidad de animacin (FPS)
+            time.sleep(0.05) 
+
+        # 3. Finalizar Evento
+        self.model.detener_musica()
+        self.model.controlar_led(False)
+        self.view.after(0, self.view.animar_estrella, False)
+        
+        # Devolvemos a Santa al inicio para la prxima vez
+        self.view.after(0, self.view.reset_santa)
+
+    def cerrar_aplicacion(self):
+        self.running = False
+        self.model.limpiar()
+        self.view.destroy()

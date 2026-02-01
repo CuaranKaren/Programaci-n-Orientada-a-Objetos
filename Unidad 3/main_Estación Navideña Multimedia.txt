@@ -1,0 +1,14 @@
+from modelo import NavidadModel
+from vista import NavidadView
+from controlador import NavidadController
+
+if __name__ == "__main__":
+    # Instanciamos las partes del MVC
+    modelo = NavidadModel()
+    vista = NavidadView()
+    
+    # El controlador une el modelo y la vista
+    controlador = NavidadController(modelo, vista)
+    
+    # Iniciamos el bucle principal de la interfaz grfica
+    vista.mainloop()
