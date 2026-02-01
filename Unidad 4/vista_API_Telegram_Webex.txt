@@ -1,0 +1,37 @@
+import time
+import requests
+import RPi.GPIO as GPIO
+
+class NotificationView:
+    def __init__(self, token_telegram, chat_id, pin_led_green=17, pin_led_red=27):
+        self.token = token_telegram
+        self.chat_id = chat_id
+        
+        # Configuración de LEDs
+        GPIO.setmode(GPIO.BCM)
+        self.green = pin_led_green
+        self.red = pin_led_red
+        GPIO.setup(self.green, GPIO.OUT)
+        GPIO.setup(self.red, GPIO.OUT)
+        self.set_leds(green=False, red=False)
+
+    def set_leds(self, green=False, red=False):
+        GPIO.output(self.green, GPIO.HIGH if green else GPIO.LOW)
+        GPIO.output(self.red, GPIO.HIGH if red else GPIO.LOW)
+
+    def log_console(self, message, level="INFO"):
+        timestamp = time.strftime("%H:%M:%S")
+        print(f"[{timestamp}] [{level}] {message}")
+
+    def send_telegram(self, message):
+        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+        payload = {"chat_id": self.chat_id, "text": message}
+        
+        try:
+            # Timeout de 5s para no bloquear el sistema si no hay internet
+            requests.post(url, json=payload, timeout=5)
+        except requests.exceptions.RequestException:
+            self.log_console("No se pudo enviar Telegram (Sin Internet)", "NETWORK_FAIL")
+    
+    def cleanup(self):
+        GPIO.cleanup()

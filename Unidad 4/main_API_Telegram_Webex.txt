@@ -1,0 +1,9 @@
+from controlador import SystemController
+
+# --- TUS DATOS AQUÍ ---
+TELEGRAM_TOKEN = "8307770333:AAEDknqHTN2L6VtFBNqYgLQfiwAU26J5LFw"
+CHAT_ID = "6625355858"
+
+if __name__ == "__main__":
+    app = SystemController(TELEGRAM_TOKEN, CHAT_ID)
+    app.run()

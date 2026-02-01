@@ -1,0 +1,45 @@
+import time
+from modelo import MonitorModel, CriticalTempError, HardwareReadError
+from vista import NotificationView
+
+class SystemController:
+    def __init__(self, telegram_token, telegram_chat_id):
+        # Aquí definimos el umbral de alerta (ej: 28.0 grados)
+        self.model = MonitorModel(pin_sensor_gpio=4, temp_threshold=29.0) 
+        self.view = NotificationView(telegram_token, telegram_chat_id)
+        self.running = True
+
+    def run(self):
+        self.view.log_console("Sistema IIoT Iniciado", "SYSTEM")
+        
+        try:
+            while self.running:
+                try:
+                    # 1. Leer datos
+                    data = self.model.read_sensor()
+                    
+                    # 2. Si todo sale bien (LED Verde)
+                    self.view.set_leds(green=True, red=False)
+                    self.view.log_console(f"T: {data['temp']}°C | H: {data['hum']}%", "NORMAL")
+
+                except CriticalTempError as e:
+                    # 3. Alerta de temperatura (LED Rojo + Telegram)
+                    self.view.set_leds(green=False, red=True)
+                    self.view.log_console(e.message, "ALERTA")
+                    self.view.send_telegram(f"🚨 {e.message}")
+
+                except HardwareReadError as e:
+                    # 4. Error de sensor (Solo LED Rojo, sin Telegram)
+                    self.view.set_leds(green=False, red=True)
+                    self.view.log_console(e.message, "SENSOR_FAIL")
+
+                except Exception as e:
+                    self.view.log_console(f"Error inesperado: {e}", "ERROR")
+
+                # Pausa necesaria para el sensor
+                time.sleep(2)
+
+        except KeyboardInterrupt:
+            self.view.log_console("Deteniendo...", "SYSTEM")
+        finally:
+            self.view.cleanup()
