@@ -1,0 +1,9 @@
+from modelo import LedModelo
+from vista import LedVista
+from controlador import LedControlador
+
+if __name__ == "__main__":
+    modelo = LedModelo()
+    vista = LedVista()
+    controlador = LedControlador(modelo, vista)
+    vista.mainloop()

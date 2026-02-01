@@ -1,0 +1,52 @@
+import datetime
+import os
+
+try:
+    import RPi.GPIO as GPIO
+    MODO_SIMULACION = False
+except ImportError:
+    MODO_SIMULACION = True
+    print("RPi.GPIO no encontrado. Ejecutando en MODO SIMULACIN.")
+
+class LedModelo:
+    def __init__(self):
+        self.led_pin = 17  
+        self.archivo_log = "historial.txt"
+        
+        # Configuracin del GPIO
+        if not MODO_SIMULACION:
+            try:
+                GPIO.setmode(GPIO.BCM)
+                GPIO.setup(self.led_pin, GPIO.OUT)
+                GPIO.output(self.led_pin, GPIO.LOW)
+            except Exception as e:
+                print(f"Error configurando GPIO: {e}")
+
+    def encender_led(self):
+        if not MODO_SIMULACION:
+            GPIO.output(self.led_pin, GPIO.HIGH)
+        self._guardar_log("ON")
+
+    def apagar_led(self):
+        if not MODO_SIMULACION:
+            GPIO.output(self.led_pin, GPIO.LOW)
+        self._guardar_log("OFF")
+
+    def _guardar_log(self, estado):
+        fecha = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        texto = f"[{fecha}] LED externo GPIO {self.led_pin}: {estado}\n"
+        
+        try:
+            with open(self.archivo_log, "a") as f:
+                f.write(texto)
+            print(f"Log registrado: {texto.strip()}")
+        except Exception as e:
+            print(f"Error escribiendo archivo: {e}")
+
+    def limpiar_gpio(self):
+        if not MODO_SIMULACION:
+            try:
+                GPIO.cleanup()
+                print("GPIO Limpiado.")
+            except RuntimeWarning:
+                pass 

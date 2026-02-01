@@ -1,0 +1,21 @@
+import tkinter as tk
+
+class LedControlador:
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
+        
+        self.view.set_controller(self)
+
+    def click_encender(self):
+        self.model.encender_led()
+        self.view.actualizar_estado("Estado: ENCENDIDO ??")
+
+    def click_apagar(self):
+        self.model.apagar_led()
+        self.view.actualizar_estado("Estado: APAGADO ?")
+
+    def cerrar_aplicacion(self):
+        print("Cerrando aplicacion...")
+        self.model.limpiar_gpio() 
+        self.view.destroy()
