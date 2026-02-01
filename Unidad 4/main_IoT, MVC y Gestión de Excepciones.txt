@@ -1,0 +1,23 @@
+from modelo import Sensor, Notificador
+from vista import Vista
+from controlador import Controlador
+
+print("🚀 Sistema IoT MVC con GUI y Telegram REAL\n")
+
+# 🔐 TOKEN REAL (reemplázalo si lo regeneras)
+TOKEN = "7989308082:AAFTpd_1LGVQGd2PJ2jX8NEyfWgFPdRTZ_M"
+
+# 🆔 PON AQUÍ TU CHAT_ID REAL
+CHAT_ID = "6450490558"
+
+sensor = Sensor()
+vista = Vista()
+notificador = Notificador(TOKEN, CHAT_ID)
+
+controlador = Controlador(sensor, vista, notificador)
+
+# Ejecuta una vez la simulación
+controlador.ejecutar()
+
+# Mantiene la ventana abierta
+vista.root.mainloop()

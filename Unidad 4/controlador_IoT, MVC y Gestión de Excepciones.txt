@@ -1,0 +1,36 @@
+from modelo import CriticalThresholdError
+
+
+class Controlador:
+    def __init__(self, sensor, vista, notificador):
+        self.sensor = sensor
+        self.vista = vista
+        self.notificador = notificador
+        self.umbral = 28
+
+    def ejecutar(self):
+        try:
+            temperatura, humedad = self.sensor.leer_datos()
+            self.vista.mostrar_datos(temperatura, humedad)
+
+            if temperatura > self.umbral:
+                raise CriticalThresholdError(
+                    f"""🚨 ALERTA DEL SISTEMA IoT
+
+Temperatura crítica detectada: {temperatura} °C
+Umbral permitido: {self.umbral} °C
+
+Acciones realizadas:
+- Activación de LED rojo
+- Notificación enviada por Telegram
+"""
+                )
+
+            self.vista.led_verde()
+
+        except CriticalThresholdError as e:
+            self.vista.led_rojo()
+            self.notificador.enviar_alerta(str(e))
+
+        except Exception as e:
+            print("❌ Error:", e)
